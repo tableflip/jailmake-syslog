@@ -1,7 +1,7 @@
 JAILmake syslog server
 ======================
 
-Figure out whose in JAIL from the mac addresses of connected users.
+Figure out who's in JAIL from the mac addresses of connected users.
 
 ## Get started
 
