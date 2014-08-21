@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "glossy": "^0.1.5"
+    "glossy": "^0.1.5",
+    "ddp": "^0.7.0"
   }
 }

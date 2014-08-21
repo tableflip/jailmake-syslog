@@ -1,6 +1,28 @@
 var syslogParser = require('glossy').Parse; // or wherever your glossy libs are
 var dgram  = require("dgram");
 var server = dgram.createSocket("udp4");
+var DDPClient = require('ddp')
+
+var ddpclient = new DDPClient({
+  host: process.argv[2] || "localhost",
+  port: 3000,
+  /* optional: */
+  auto_reconnect: true,
+  auto_reconnect_timer: 500,
+  use_ejson: true,  // default is false
+  use_ssl: false, //connect to SSL server,
+  use_ssl_strict: true, //Set to false if you have root ca trouble.
+  maintain_collections: true //Set to false to maintain your own collections.
+})
+
+ddpclient.connect(function(error) {
+  console.log('connected!');
+
+  if (error) {
+    console.log('DDP connection error!');
+    return;
+  }
+})
 
 var users = {
   "f8:a9:d0:0d:a4:e7": { name: "Evans" },
