@@ -17,11 +17,14 @@ var ddpclient = new DDPClient({
 
 ddpclient.connect(function(error) {
   console.log('connected!');
-
   if (error) {
     console.log('DDP connection error!');
     return;
   }
+  ddpclient.call(
+    'macmessage',
+    ['fo:oo:oo:oo',new Date(),'online']
+  )
 })
 
 var users = {
