@@ -16,52 +16,50 @@ var ddpclient = new DDPClient({
 })
 
 ddpclient.connect(function(error) {
-  console.log('connected!');
+  console.log('connected! polling started');
   if (error) {
     console.log('DDP connection error!');
     return;
   }
-  ddpclient.call(
-    'macmessage',
-    ['fo:oo:oo:oo',new Date(),'online']
-  )
+  poll()
 })
 
-var users = {
-  "f8:a9:d0:0d:a4:e7": { name: "Evans" },
-  "1c:b0:94:a8:50:a6": { name: "Liam" },
-  "cc:fa:00:e9:22:d0": { name: "Bernard" }
-}
+var outbox = []
+
+var sending = false
 
 var router = {
   "Associated with station": online,
   "Disassociated with station": offline
 }
 
-function findUser (msg) {
-  if(!msg.mac) return
-  var user = users[msg.mac]
-  if (!user) user = users[msg.mac] = {status: 'offline', lastSeen: 'never'}
-  msg.user = user
-  return user
-}
-
-function userEvent (msg) {
-  if(!msg.user) return
-  msg.user.lastSeen = new Date().toISOString() // TODO: could extract value from sylog msg...
-  console.log("%s - %s - %s is %s", msg.user.lastSeen, msg.mac, msg.user.name, msg.user.status)
-}
-
 function online (msg) {
-  if(!msg.user) return
-  msg.user.status = "online"
+  if(!msg) return
+  msg.status = "online"
 }
 
 function offline (msg) {
-  if(!msg.user) return
-  msg.user.status = "offline"
+  if(!msg) return
+  msg.status = "offline"
 }
 
+function poll (){
+  setTimeout(function(){
+    poll()
+    if(!outbox.length || sending === true) return
+    var msg = outbox[outbox.length-1]
+    sending = true
+    ddpclient.call(
+      'macmessage',
+      [msg.mac,new Date(),msg.status],
+      function (err, result){//callback which returns result which sets sending to false
+       // if(err) throw Error
+       if(result === 'finished') sending = false
+       outbox.pop()
+      }
+    )
+  },500)
+}
 /* Split messages that contain a mac like so:
   from { message: "Associated with station 18:34:51:d1:73:ff" }
     to { event: "Associated with station", mac:"18:34:51:d1:73:ff"}
@@ -93,15 +91,15 @@ function macParser(msg) {
   }
 */
 function syslogMessageHandler(msg) {
-
   macParser(msg)
   // console.error('msg', msg)
   if (!msg.event) return // not a mac msg
   // console.log(msg.mac, msg.event)
-  findUser(msg)
   var handler = router[msg.event] || function() {}
   handler(msg)
-  userEvent(msg)
+  outbox.unshift(msg)
+  console.log('------------OUTBOX-----| '+outbox.length+' |------')
+  console.log(outbox[outbox.length-1])
 }
 
 server.on("message", function(rawMessage) {
