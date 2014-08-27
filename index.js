@@ -16,12 +16,20 @@ var ddpclient = new DDPClient({
 })
 
 ddpclient.connect(function(error) {
-  console.log('connected! polling started');
   if (error) {
     console.log('DDP connection error!');
     return;
   }
+  console.log('connected! polling started');
   poll()
+})
+ddpclient.on('socket-close', function(code, message) {
+  console.log("Close: %s %s", code, message)
+  sending = false
+})
+ddpclient.on('socket-error', function(error) {
+  console.log("Error: %j", error)
+  sending = false
 })
 
 var outbox = []
@@ -50,12 +58,11 @@ function poll (){
     var msg = outbox[outbox.length-1]
     sending = true
     ddpclient.call(
-      'macmessage',
+      'syslog',
       [msg.mac,new Date(),msg.status],
-      function (err, result){//callback which returns result which sets sending to false
-       // if(err) throw Error
-       if(result === 'finished') sending = false
-       outbox.pop()
+      function (err, result){
+       sending = false
+       if(result === msg.mac) outbox.pop()
       }
     )
   },500)
@@ -99,7 +106,9 @@ function syslogMessageHandler(msg) {
   handler(msg)
   outbox.unshift(msg)
   console.log('------------OUTBOX-----| '+outbox.length+' |------')
-  console.log(outbox[outbox.length-1])
+  for(i in outbox){
+    console.log(outbox[i].mac+' '+outbox[i].time+' '+outbox[i].status)
+  }
 }
 
 server.on("message", function(rawMessage) {
