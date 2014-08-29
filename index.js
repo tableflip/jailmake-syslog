@@ -4,8 +4,8 @@ var server = dgram.createSocket("udp4");
 var DDPClient = require('ddp')
 
 var ddpclient = new DDPClient({
-  host: process.argv[2] || "jail.meteor.com",
-  port: process.argv[3] || 80,
+  host: process.argv[2] || "localhost",
+  port: process.argv[3] || 90≈00,
   /* optional: */
   auto_reconnect: true,
   auto_reconnect_timer: 500,
@@ -26,11 +26,11 @@ ddpclient.connect(function(error) {
   poll()
 })
 ddpclient.on('socket-close', function(code, message) {
-  console.log("Close: %s %s", code, message)
+  console.log('Lost connection to  %s:%s', ddpclient.host, ddpclient.port)
   sending = false
 })
 ddpclient.on('socket-error', function(error) {
-  console.log("Error: %j", error)
+  console.log("Error in connection to %s:%s - %j", ddpclient.host, ddpclient.port, error)
   sending = false
 })
 
