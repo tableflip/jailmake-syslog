@@ -4,8 +4,8 @@ var server = dgram.createSocket("udp4");
 var DDPClient = require('ddp')
 
 var ddpclient = new DDPClient({
-  host: process.argv[2] || "localhost",
-  port: 3000,
+  host: process.argv[2] || "jail.meteor.com",
+  port: process.argv[3] || 80,
   /* optional: */
   auto_reconnect: true,
   auto_reconnect_timer: 500,
