@@ -15,12 +15,14 @@ var ddpclient = new DDPClient({
   maintain_collections: true //Set to false to maintain your own collections.
 })
 
+console.log('JAILmake syslog server online. Commencing initiation sequence...')
+
 ddpclient.connect(function(error) {
   if (error) {
-    console.log('DDP connection error!');
+    console.log('Failed to connect to: %s:%s', ddpclient.host, ddpclient.port)
     return;
   }
-  console.log('connected! polling started');
+  console.log('Connected to: %s:%s', ddpclient.host, ddpclient.port)
   poll()
 })
 ddpclient.on('socket-close', function(code, message) {
@@ -62,7 +64,10 @@ function poll (){
       [msg.mac,new Date(),msg.status],
       function (err, result){
        sending = false
-       if(result === msg.mac) outbox.pop()
+       if(result === msg.mac) {
+         outbox.pop()
+         console.log('  DDP OUT: %s %s (%s more in queue)', msg.mac, msg.status, outbox.length)
+       }
       }
     )
   },500)
@@ -105,10 +110,7 @@ function syslogMessageHandler(msg) {
   var handler = router[msg.event] || function() {}
   handler(msg)
   outbox.unshift(msg)
-  console.log('------------OUTBOX-----| '+outbox.length+' |------')
-  for(i in outbox){
-    console.log(outbox[i].mac+' '+outbox[i].time+' '+outbox[i].status)
-  }
+  console.log('SYSLOG IN: %s %s', msg.mac, msg.status)
 }
 
 server.on("message", function(rawMessage) {
@@ -117,7 +119,7 @@ server.on("message", function(rawMessage) {
 
 server.on("listening", function() {
   var address = server.address();
-  console.log("Server now listening at " +
+  console.log("Listening for syslog messages at: " +
       address.address + ":" + address.port);
 });
 
